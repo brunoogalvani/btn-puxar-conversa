@@ -125,13 +125,10 @@
 
   // Pedir o dado para a página mãe
   window.parent.postMessage({ action: "getAgentName" }, "*");
-  console.log("iframe, [postMessage enviado]", { action: "getAgentName" });
 
   // Escutar a resposta
   window.addEventListener("message", (event) => {
-    console.log("iframe, [postMessage recebido]", event);
     if (event.data.action === "returnAgentName") {
-        console.log("iframe, Nome do agente:", event.data.agentName);
         agentName = event.data.agentName;
         btn.disabled = false;
     }

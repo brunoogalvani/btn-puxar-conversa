@@ -85,8 +85,10 @@
     return data.departments.map(d => d.departmentId);
   }
 
+  let departmentIds;
+
   async function updateAgentLimit(agentId, agentData, newLimit) { // agentData.livechat?
-    const departmentIds = await getAgentDepartments(agentId);
+    departmentIds = await getAgentDepartments(agentId);
     const bodyData = {
       message: JSON.stringify({
         msg: "method",
@@ -134,21 +136,23 @@
     }
   });
 
+  let user, agentData, currentLimit, newLimit;
+
   btn.addEventListener("click", async () => {
     btn.disabled = true;
 
     try {
       // 1. Buscar usuário
-      const user = await getUserByUsername(agentName);
+      user = await getUserByUsername(agentName);
 
       // 2. Buscar info do agente no livechat
-      const agentData = await getAgentLivechatInfo(user._id);
+      agentData = await getAgentLivechatInfo(user._id);
 
       // 3. Quantas conversas abertas o agente tem?
       const openChats = await getOpenChats(user._id);
 
       // 4. Qual o limite atual?
-      const currentLimit = Number(agentData.livechat?.maxNumberSimultaneousChat) || 0;
+      currentLimit = Number(agentData.livechat?.maxNumberSimultaneousChat) || 0;
 
       console.log(`Agente: ${agentName} | Conversas abertas: ${openChats} | Limite atual: ${currentLimit}`);
 
@@ -179,4 +183,51 @@
       btn.disabled = false;
     }
   });
+
+  // Evento para restaurar o limite caso o usuário saia da página ou navegue
+  window.addEventListener("beforeunload", () => {
+    if (user && agentData && currentLimit !== undefined && newLimit !== undefined) {
+      // Se o limite foi aumentado e não foi restaurado ainda
+      if (newLimit > currentLimit) {
+        const url = `${API_BASE}/method.call/livechat%3AsaveAgentInfo`;
+
+        const bodyData = {
+          message: JSON.stringify({
+            msg: "method",
+            id: "14",
+            method: "livechat:saveAgentInfo",
+            params: [
+              user._id,
+              {
+                name: agentData.livechat.name,
+                username: agentData.livechat.username,
+                email: agentData.livechat.email || `${agentData.livechat.username}@sapios.com.br`,
+                maxNumberSimultaneousChat: String(currentLimit),
+                voipExtension: agentData.livechat.voipExtension || "",
+              },
+              departmentIds
+            ],
+          }),
+        };
+
+        // Usando fetch com keepalive
+        navigator.sendBeacon
+          ? navigator.sendBeacon(
+              url,
+              JSON.stringify(bodyData)
+            )
+          : fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Auth-Token": X_Auth_Token,
+                "X-User-Id": X_User_Id,
+              },
+              body: JSON.stringify(bodyData),
+              keepalive: true,
+            })
+      }
+    }
+  })
+
 </script>

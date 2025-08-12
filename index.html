@@ -120,17 +120,28 @@
     return await res.json();
   }
 
-  btn.addEventListener("click", async () => {
-    const elemento = await document.getElementById("agentInfo");
-    const username = await elemento.getAttribute("data-agent-name");
-    console.log('elemento: ', elemento)
-    console.log('username: ', username)
+  let agentName = null;
+  btn.disabled = true;
 
+  // Pedir o dado para a página mãe
+  window.parent.postMessage({ action: "getAgentName" }, "*");
+
+  // Escutar a resposta
+  window.addEventListener("message", (event) => {
+      if (event.data.action === "returnAgentName") {
+          console.log("Nome do agente:", event.data.agentName);
+          agentName = event.data.agentName;
+          btn.disabled = false;
+      }
+  });
+
+
+  btn.addEventListener("click", async () => {
     btn.disabled = true;
 
     try {
       // 1. Buscar usuário
-      const user = await getUserByUsername(username);
+      const user = await getUserByUsername(agentName);
 
       // 2. Buscar info do agente no livechat
       const agentData = await getAgentLivechatInfo(user._id);

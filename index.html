@@ -153,7 +153,7 @@
       // 4. Qual o limite atual?
       const currentLimit = Number(agentData.livechat?.maxNumberSimultaneousChat) || 0;
 
-      console.log(`Agente: ${username} | Conversas abertas: ${openChats} | Limite atual: ${currentLimit}`);
+      console.log(`Agente: ${agentName} | Conversas abertas: ${openChats} | Limite atual: ${currentLimit}`);
 
       if (openChats >= currentLimit) { // talvez colocar >=
         const newLimit = openChats + 1;
